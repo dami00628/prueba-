@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trivia con Ruleta - Estilo Preguntados</title>
+    <style>
+        :root {
+            --historia: #e67e22;
+            --arte: #e74c3c;
+            --deportes: #f1c40f;
+            --entretenimiento: #9b59b6;
+            --geografia: #3498db;
+            --ciencia: #2ecc71;
+            --primary: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
+                        url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80') no-repeat center center fixed;
+            background-size: cover;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            background-color: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(8px);
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            padding: 30px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 1.8rem;
+        }
+
+        /* --- PANTALLAS --- */
+        .welcome-screen, .end-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 10px 0;
+        }
+
+        .welcome-logo, .end-logo {
+            font-size: 4rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        p {
+            color: #555;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .btn-green {
+            background-color: #2bac76;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 15px rgba(43, 172, 118, 0.4);
+            transition: all 0.2s ease;
+            width: 80%;
+            margin-top: 10px;
+        }
+
+        .btn-green:hover {
+            background-color: #259364;
+            transform: scale(1.05);
+        }
+
+        .main-game-content, .quiz-screen, .end-screen {
+            display: none;
+        }
+
+        /* --- MARCADOR SUPERIOR --- */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .score-board {
+            flex: 1;
+            font-size: 1.1rem;
+            font-weight: bold;
+            background: var(--primary);
+            color: white;
+            padding: 10px;
+            border-radius: 12px;
+        }
+
+        /* --- RULETA --- */
+        .wheel-box {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 25px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 25px solid var(--primary);
+            z-index: 10;
+        }
+
+        .wheel-svg {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+            border: 6px solid #fff;
+            transition: transform 4s cubic-bezier(0.1, 0.8, 0.1, 1);
+            transform: rotate(0deg);
+        }
+
+        .btn-spin {
+            background-color: #ffffff;
+            color: var(--primary);
+            border: 5px solid var(--primary);
+            border-radius: 50%;
+            width: 75px;
+            height: 75px;
+            position: absolute;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-spin:disabled {
+            background-color: #e2e8f0;
+            border-color: #bdc3c7;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        /* --- TEMPORIZADOR --- */
+        .timer-container {
+            width: 100%;
+            background-color: #e2e8f0;
+            height: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .timer-bar {
+            width: 100%;
+            height: 100%;
+            background-color: #e74c3c;
+            transition: width 1s linear;
+        }
+
+        .timer-text {
+            font-weight: bold;
+            color: #e74c3c;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        /* --- PANTALLA DE PREGUNTAS --- */
+        .category-header {
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            margin-bottom: 25px;
+            font-weight: 600;
+            color: var(--primary);
+            min-height: 50px;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-option {
+            background-color: #f8f9fa;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: 500;
+            text-align: left;
+            transition: all 0.2s;
+        }
+
+        .btn-option:hover {
+            background-color: #edf2f7;
+            transform: translateY(-2px);
+        }
+
+        .btn-option.correct {
+            background-color: #2ecc71 !important;
+            color: white;
+            border-color: #2ecc71;
+        }
+
+        .btn-option.incorrect {
+            background-color: #e74c3c !important;
+            color: white;
+            border-color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="sound-correct" src="https://actions.google.com/sounds/v1/cartoon/positive_guitar_reminder.ogg" preload="auto"></audio>
+    <audio id="sound-incorrect" src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg" preload="auto"></audio>
+
+    <div class="game-container">
+        
+        <!-- PANTALLA DE BIENVENIDA -->
+        <div id="welcome-screen" class="welcome-screen">
+            <div class="welcome-logo">🎯</div>
+            <h1>Trivia Master</h1>
+            <p>Pon a prueba tus conocimientos en un torneo de <strong>10 rondas</strong> con preguntas aleatorias. ¿Lograrás el puntaje perfecto?</p>
+            <button class="btn-green" onclick="startGame()">¡EMPEZAR A JUGAR!</button>
+        </div>
+
+        <!-- CONTENIDO PRINCIPAL DEL JUEGO -->
+        <div id="main-game" class="main-game-content">
+            <div class="top-bar">
+                <div class="score-board">🏆 Puntos: <span id="score">0</span></div>
+                <div class="score-board" style="background:#7f8c8d;">📋 Ronda: <span id="round">1</span>/10</div>
+            </div>
+
+            <!-- PANTALLA DE LA RULETA -->
+            <div id="ruleta-screen">
+                <h1>¡Gira la Ruleta!</h1>
+                <div class="wheel-box">
+                    <div class="pointer"></div>
+                    
+                    <svg id="wheel" class="wheel-svg" viewBox="0 0 200 200">
+                        <path d="M100,100 L100,10 A90,90 0 0,1 177.94,55 Z" fill="#e67e22"/>
+                        <path d="M100,100 L177.94,55 A90,90 0 0,1 177.94,145 Z" fill="#e74c3c"/>
+                        <path d="M100,100 L177.94,145 A90,90 0 0,1 100,190 Z" fill="#f1c40f"/>
+                        <path d="M100,100 L100,190 A90,90 0 0,1 22.06,145 Z" fill="#9b59b6"/>
+                        <path d="M100,100 L22.06,145 A90,90 0 0,1 22.06,55 Z" fill="#3498db"/>
+                        <path d="M100,100 L22.06,55 A90,90 0 0,1 100,10 Z" fill="#2ecc71"/>
+
+                        <text x="135" y="42" fill="#fff" font-size="7" font-weight="bold" text-anchor="middle" transform="rotate(30, 135, 42)">HISTORIA</text>
+                        <text x="156" y="102" fill="#fff" font-size="7" font-weight="bold" text-anchor="middle" transform="rotate(90, 156, 102)">ARTE</text>
+                        <text x="135" y="162" fill="#fff" font-size="7" font-weight="bold" text-anchor="middle" transform="rotate(150, 135, 162)">DEPORTES</text>
+                        <text x="65" y="162" fill="#fff" font-size="7" font-weight="bold" text-anchor="middle" transform="rotate(210, 65, 162)">CINE</text>
+                        <text x="44" y="102" fill="#fff" font-size="7" font-weight="bold" text-anchor="middle" transform="rotate(270, 44, 102)">GEOGRAFÍA</text>
+                        <text x="65" y="42" fill="#fff" font-size="7" font-weight="bold" text-anchor="middle" transform="rotate(330, 65, 42)">CIENCIA</text>
+                    </svg>
+
+                    <button id="spin-button" class="btn-spin" onclick="spinWheel()">GIRAR</button>
+                </div>
+                <p id="status-text" style="font-weight: bold; color: #555;">Presiona el botón central para jugar</p>
+            </div>
+
+            <!-- PANTALLA DE PREGUNTA -->
+            <div id="quiz-screen" class="quiz-screen">
+                <div id="category-banner" class="category-header">Categoría</div>
+                <div class="timer-text">⏱️ Tiempo: <span id="timer-counter">15</span>s</div>
+                <div class="timer-container">
+                    <div id="timer-bar" class="timer-bar"></div>
+                </div>
+                <div id="question-text" class="question-text">Pregunta aquí</div>
+                <div id="options-container" class="options-list"></div>
+            </div>
+        </div>
+
+        <!-- PANTALLA FINAL -->
+        <div id="end-screen" class="end-screen">
+            <div class="end-logo">🏆</div>
+            <h1>¡Fin de la Partida!</h1>
+            <p>Has completado las 10 rondas de juego.</p>
+            <div style="background: #2c3e50; color: white; padding: 15px 30px; border-radius: 15px; font-size: 1.5rem; font-weight: bold; margin: 10px 0;">
+                Puntaje: <span id="final-score">0</span> pts
+            </div>
+            <p id="rank-text" style="font-weight: bold; color: #2bac76; font-size: 1.2rem;"></p>
+            <button class="btn-green" onclick="resetGame()">VOLVER A JUGAR</button>
+        </div>
+
+    </div>
+
+    <script>
+        // BANCO MASIVO EXPANSO (10 PREGUNTAS POR CATEGORÍA)
+        const triviaDB = {
+            historia: [
+                { q: "¿Qué civilización antigua construyó Machu Picchu?", o: ["Mayas", "Incas", "Aztecas", "Olmecas"], a: 1 },
+                { q: "¿En qué año llegó Cristóbal Colón a América?", o: ["1492", "1588", "1350", "1776"], a: 0 },
+                { q: "¿Quién fue el primer presidente de los Estados Unidos?", o: ["Abraham Lincoln", "Thomas Jefferson", "George Washington", "John F. Kennedy"], a: 2 },
+                { q: "¿Qué país regaló la Estatua de la Libertad a Estados Unidos?", o: ["Francia", "Reino Unido", "Italia", "Alemania"], a: 0 },
+                { q: "¿Qué hito histórico marcó el fin de la Edad Media en 1453?", o: ["El descubrimiento de América", "La caída de Constantinopla", "La Revolución Francesa", "La invención de la imprenta"], a: 1 },
+                { q: "¿Quién fue el líder militar y político francés que se coronó emperador en 1804?", o: ["Luis XIV", "Napoleón Bonaparte", "Carlos de Gaulle", "Maximilien Robespierre"], a: 1 },
+                { q: "¿Qué antigua civilización inventó los jeroglíficos y momificaba a sus muertos?", o: ["Griegos", "Mesopotámicos", "Egipcios", "Romanos"], a: 2 },
+                { q: "¿Qué conflicto global se desarrolló entre 1914 y 1918?", o: ["Segunda Guerra Mundial", "Guerra Fría", "Guerra de los Cien Años", "Primera Guerra Mundial"], a: 3 },
+                { q: "¿Quién fue la última reina del Antiguo Egipto antes de que se convirtiera en provincia romana?", o: ["Nefertiti", "Cleopatra", "Hatshepsut", "Isis"], a: 1 },
+                { q: "¿Qué ciudad fue dividida por un famoso muro desde 1961 hasta 1989?", o: ["París", "Londres", "Moscú", "Berlín"], a: 3 }
+            ],
+            ciencia: [
+                { q: "¿Cuál es el planeta más grande del sistema solar?", o: ["Marte", "Saturno", "Júpiter", "Neptuno"], a: 2 },
+                { q: "¿Cuál es el elemento químico del agua?", o: ["CO2", "H2O", "NaCl", "O2"], a: 1 },
+                { q: "¿Qué órgano del cuerpo humano consume más energía?", o: ["El corazón", "El cerebro", "El hígado", "Los músculos"], a: 1 },
+                { q: "¿Cuál es la velocidad de la luz aproximadamente?", o: ["300,000 km/s", "150,000 km/s", "1,000,000 km/s", "50,000 km/s"], a: 0 },
+                { q: "¿Qué tipo de animal es la ballena azul?", o: ["Pez", "Anfibio", "Mamífero", "Reptil"], a: 2 },
+                { q: "¿Quién propuso la famosa Teoría de la Relatividad?", o: ["Isaac Newton", "Albert Einstein", "Nikola Tesla", "Galileo Galilei"], a: 1 },
+                { q: "¿Cuál es el gas más abundante en la atmósfera de la Tierra?", o: ["Oxígeno", "Dióxido de carbono", "Hidrógeno", "Nitrógeno"], a: 3 },
+                { q: "¿Qué proceso utilizan las plantas para convertir la luz solar en alimento?", o: ["Respiración celular", "Fotosíntesis", "Mitosis", "Fermentación"], a: 1 },
+                { q: "¿Cuál es el único metal que se encuentra en estado líquido a temperatura ambiente?", o: ["Hierro", "Mercurio", "Plomo", "Cobre"], a: 1 },
+                { q: "¿Qué partícula subatómica tiene carga eléctrica negativa?", o: ["Protón", "Neutrón", "Electrón", "Quark"], a: 2 }
+            ],
+            geografia: [
+                { q: "¿Cuál es el río más largo del mundo?", o: ["Nilo", "Amazonas", "Misisipi", "Danubio"], a: 1 },
+                { q: "¿En qué continente se encuentra el desierto del Sahara?", o: ["Asia", "América", "África", "Oceanía"], a: 2 },
+                { q: "¿Cuál es el país más grande del mundo por extensión territorial?", o: ["Canadá", "China", "Rusia", "Estados Unidos"], a: 2 },
+                { q: "¿Cuál es la capital oficial de Australia?", o: ["Sídney", "Melbourne", "Canberra", "Brisbane"], a: 2 },
+                { q: "¿Qué océano baña las costas de Japón?", o: ["Océano Atlántico", "Océano Índico", "Océano Pacífico", "Océano Ártico"], a: 2 },
+                { q: "¿Cuál es la cordillera más alta del mundo, donde se encuentra el monte Everest?", o: ["Los Andes", "Los Alpes", "Las Rocosas", "El Himalaya"], a: 3 },
+                { q: "¿Cuál es la capital de Italia?", o: ["Milán", "Roma", "Venecia", "Florencia"], a: 1 },
+                { q: "¿Qué país es famoso por sus pirámides y el río Nilo?", o: ["Grecia", "Marruecos", "Egipto", "Turquía"], a: 2 },
+                { q: "¿Qué línea imaginaria divide a la Tierra en Hemisferio Norte y Hemisferio Sur?", o: ["Meridiano de Greenwich", "Trópico de Cáncer", "Ecuador", "Trópico de Capricornio"], a: 2 },
+                { q: "¿Cuál es el estado más grande de los Estados Unidos en términos de territorio?", o: ["Texas", "California", "Alaska", "Florida"], a: 2 }
+            ],
+            entretenimiento: [
+                { q: "¿Qué película de Disney incluye la canción 'Libre soy'?", o: ["Frozen", "Moana", "Mulan", "Tarzán"], a: 0 },
+                { q: "¿Quién es el archienemigo de Batman?", o: ["Lex Luthor", "El Guasón", "Thanos", "Duende Verde"], a: 1 },
+                { q: "¿Cómo se llama el fontanero de chaqueta verde y hermano de Mario?", o: ["Wario", "Luigi", "Yoshi", "Toad"], a: 1 },
+                { q: "¿Qué banda británica lanzó el álbum 'The Dark Side of the Moon'?", o: ["The Beatles", "Queen", "Led Zeppelin", "Pink Floyd"], a: 3 },
+                { q: "¿Cuántos libros componen la saga original de Harry Potter?", o: ["5", "6", "7", "8"], a: 2 },
+                { q: "¿Cuál es la película más taquillera de todos los tiempos (sin ajustar inflación)?", o: ["Titanic", "Avengers: Endgame", "Avatar", "Star Wars: Episode VII"], a: 2 },
+                { q: "¿Qué actor dio vida al personaje de Jack Dawson en la película 'Titanic'?", o: ["Brad Pitt", "Johnny Depp", "Leonardo DiCaprio", "Matt Damon"], a: 2 },
+                { q: "¿Cuál es el nombre de la mítica serie de televisión de ciencia ficción donde sale 'Grogu' (Baby Yoda)?", o: ["The Mandalorian", "Star Trek", "Stranger Things", "Doctor Who"], a: 0 },
+                { q: "¿Qué famosa cantante del pop es conocida popularmente como la 'Reina del Pop'?", o: ["Britney Spears", "Madonna", "Lady Gaga", "Taylor Swift"], a: 1 },
+                { q: "¿Cómo se llama el reino ficticio donde se desarrolla la trama de 'Black Panther'?", o: ["Asgard", "Wakanda", "Atlantis", "Latveria"], a: 1 }
+            ],
+            deportes: [
+                { q: "¿Cuántos jugadores tiene un equipo de fútbol en cancha?", o: ["9", "10", "11", "12"], a: 2 },
+                { q: "¿Cada cuántos años se celebran los Juegos Olímpicos?", o: ["2 años", "4 años", "6 años", "Cada año"], a: 1 },
+                { q: "¿Qué deporte practica habitualmente Rafael Nadal?", o: ["Golf", "Fútbol", "Tenis", "Baloncesto"], a: 2 },
+                { q: "¿Cuánto dura un partido de baloncesto de la NBA?", o: ["40 minutos", "48 minutos", "60 minutos", "90 minutos"], a: 1 },
+                { q: "¿Qué país ha ganado más Copas Mundiales de Fútbol de la FIFA?", o: ["Alemania", "Italia", "Argentina", "Brasil"], a: 3 },
+                { q: "¿Quién es considerado de forma masiva el velocista más rápido del mundo tras batir récords en los 100m y 200m?", o: ["Carl Lewis", "Usain Bolt", "Michael Phelps", "Tyson Gay"], a: 1 },
+                { q: "¿En qué deporte se utiliza una bola blanca muy pequeña llamada 'pájaro' o 'volante'?", o: ["Golf", "Ping-pong", "Bádminton", "Hockey"], a: 2 },
+                { q: "¿Qué número icónico llevó Michael Jordan en la mayor parte de su carrera con los Chicago Bulls?", o: ["8", "23", "33", "10"], a: 1 },
+                { q: "¿Cuál es el torneo de tenis más antiguo y prestigioso del mundo, jugado sobre hierba en Londres?", o: ["Roland Garros", "US Open", "Australian Open", "Wimbledon"], a: 3 },
+                { q: "¿Cuánto dura un combate clásico de boxeo profesional por un título mundial (número de asaltos)?", o: ["10 asaltos", "12 asaltos", "15 asaltos", "8 asaltos"], a: 1 }
+            ],
+            arte: [
+                { q: "¿Quién pintó la famosa 'Mona Lisa'?", o: ["Van Gogh", "Picasso", "Leonardo da Vinci", "Miguel Ángel"], a: 2 },
+                { q: "¿Cuál de estos artistas es famoso por cortarse una oreja?", o: ["Vincent van Gogh", "Salvador Dalí", "Claude Monet", "Rembrandt"], a: 0 },
+                { q: "¿A qué movimiento artístico pertenecía el pintor Salvador Dalí?", o: ["Impresionismo", "Cubismo", "Surrealismo", "Expresionismo"], a: 2 },
+                { q: "¿Quién esculpió la famosa estatua del 'David'?", o: ["Donatello", "Miguel Ángel", "Bernini", "Leonardo da Vinci"], a: 1 },
+                { q: "¿En qué país nació el pintor Pablo Picasso?", o: ["Francia", "Italia", "España", "Portugal"], a: 2 },
+                { q: "¿Qué célebre pintor holandés creó la obra maestra nocturna 'La noche estrellada'?", o: ["Rembrandt", "Johannes Vermeer", "Piet Mondrian", "Vincent van Gogh"], a: 3 },
+                { q: "¿Cómo se llama la famosa pintura de Edvard Munch que muestra una figura con una expresión de desesperación?", o: ["El Grito", "El Beso", "La Persistencia de la Memoria", "Guernica"], a: 0 },
+                { q: "¿Qué arquitecto español diseñó la majestuosa e inacabada basílica de la Sagrada Familia en Barcelona?", o: ["Diego Velázquez", "Antoni Gaudí", "Santiago Calatrava", "Francisco de Goya"], a: 1 },
+                { q: "¿Dónde se encuentra físicamente expuesta la célebre pintura mural 'La última cena' de Leonardo da Vinci?", o: ["Museo del Prado (Madrid)", "Museo del Louvre (París)", "Iglesia Santa Maria delle Grazie (Milán)", "Museos Vaticanos"], a: 2 },
+                { q: "¿Qué estilo artístico europeo del siglo XVII y XVIII se caracteriza por el exceso de ornamentación, dramatismo y detalles detallados?", o: ["Renacimiento", "Gótico", "Barroco", "Neoclasicismo"], a: 2 }
+            ]
+        };
+
+        const categories = [
+            { name: "historia", label: "Historia 🏛️", color: "var(--historia)" },
+            { name: "arte", label: "Arte 🎨", color: "var(--arte)" },
+            { name: "deportes", label: "Deportes ⚽", color: "var(--deportes)" },
+            { name: "entretenimiento", label: "Entretenimiento 🎬", color: "var(--entretenimiento)" },
+            { name: "geografia", label: "Geografía 🌍", color: "var(--geografia)" },
+            { name: "ciencia", label: "Ciencia 🔬", color: "var(--ciencia)" }
+        ];
+
+        let score = 0;
+        let round = 1;
+        let currentRotation = 0;
+        let canAnswer = true;
+        let timerInterval;
+        let timeLeft = 15;
+        let currentCorrectIndex = 0;
+
+        function startGame() {
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('main-game').style.display = 'block';
+        }
+
+        function spinWheel() {
+            const spinButton = document.getElementById('spin-button');
+            const wheel = document.getElementById('wheel');
+            const statusText = document.getElementById('status-text');
+            
+            spinButton.disabled = true;
+            statusText.innerText = "¡Girando... 🎲!";
+
+            const randomDegrees = Math.floor(Math.random() * 360);
+            currentRotation += 1440 + randomDegrees; 
+            
+            wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+            setTimeout(() => {
+                const actualDegrees = (currentRotation % 360);
+                const targetDegree = (360 - actualDegrees + 30) % 360; 
+                const categoryIndex = Math.floor(targetDegree / 60);
+                
+                const selectedCategory = categories[categoryIndex];
+                statusText.innerText = `¡Te tocó: ${selectedCategory.label}!`;
+                
+                setTimeout(() => {
+                    openQuiz(selectedCategory);
+                }, 1200);
+
+            }, 4000);
+        }
+
+        function openQuiz(categoryObj) {
+            document.getElementById('ruleta-screen').style.display = 'none';
+            document.getElementById('quiz-screen').style.display = 'block';
+            canAnswer = true;
+            
+            const banner = document.getElementById('category-banner');
+            const qText = document.getElementById('question-text');
+            const optionsContainer = document.getElementById('options-container');
+            
+            banner.innerText = categoryObj.label;
+            banner.style.backgroundColor = categoryObj.color;
+            optionsContainer.innerHTML = '';
+
+            const questionsList = triviaDB[categoryObj.name];
+            const randomQuestion = questionsList[Math.floor(Math.random() * questionsList.length)];
+
+            qText.innerText = randomQuestion.q;
+            currentCorrectIndex = randomQuestion.a;
+
+            randomQuestion.o.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-option';
+                btn.innerText = option;
+                btn.onclick = () => checkAnswer(index, randomQuestion.a, btn);
+                optionsContainer.appendChild(btn);
+            });
+
+            startTimer();
+        }
+
+        function startTimer() {
+            timeLeft = 15;
+            document.getElementById('timer-counter').innerText = timeLeft;
+            document.getElementById('timer-bar').style.width = "100%";
+            
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer-counter').innerText = timeLeft;
+                
+                let percentage = (timeLeft / 15) * 100;
+                document.getElementById('timer-bar').style.width = percentage + "%";
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timeOutLoss();
+                }
+            }, 1000);
+        }
+
+        function timeOutLoss() {
+            if (!canAnswer) return;
+            canAnswer = false;
+
+            document.getElementById('sound-incorrect').play().catch(e => {});
+            const options = document.getElementById('options-container').children;
+            options[currentCorrectIndex].classList.add('correct');
+
+            setTimeout(nextStep, 2500);
+        }
+
+        function checkAnswer(selectedIndex, correctIndex, selectedButton) {
+            if (!canAnswer) return;
+            canAnswer = false;
+            clearInterval(timerInterval);
+
+            const options = document.getElementById('options-container').children;
+
+            if (selectedIndex === correctIndex) {
+                selectedButton.classList.add('correct');
+                document.getElementById('sound-correct').play().catch(e => {});
+                score += 10;
+                document.getElementById('score').innerText = score;
+            } else {
+                selectedButton.classList.add('incorrect');
+                options[correctIndex].classList.add('correct');
+                document.getElementById('sound-incorrect').play().catch(e => {});
+            }
+
+            setTimeout(nextStep, 2200);
+        }
+
+        function nextStep() {
+            document.getElementById('quiz-screen').style.display = 'none';
+            
+            if (round >= 10) {
+                showEndScreen();
+            } else {
+                round++;
+                document.getElementById('round').innerText = round;
+                document.getElementById('ruleta-screen').style.display = 'block';
+                document.getElementById('spin-button').disabled = false;
+                document.getElementById('status-text').innerText = "¡Vuelve a girar!";
+            }
+        }
+
+        function showEndScreen() {
+            document.getElementById('main-game').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'flex';
+            document.getElementById('final-score').innerText = score;
+
+            const rankText = document.getElementById('rank-text');
+            if (score === 100) {
+                rankText.innerText = "👑 ¡Eres una Leyenda Indiscutible! Puntaje Perfecto.";
+            } else if (score >= 70) {
+                rankText.innerText = "🧠 ¡Excelente nivel! Conoces muchísimo de todo.";
+            } else if (score >= 40) {
+                rankText.innerText = "👍 ¡Buen intento! Tienes cultura general firme.";
+            } else {
+                rankText.innerText = "📚 ¡Necesitas practicar más! Inténtalo de nuevo.";
+            }
+        }
+
+        function resetGame() {
+            score = 0;
+            round = 1;
+            document.getElementById('score').innerText = score;
+            document.getElementById('round').innerText = round;
+            document.getElementById('end-screen').style.display = 'none';
+            document.getElementById('main-game').style.display = 'block';
+            document.getElementById('ruleta-screen').style.display = 'block';
+            document.getElementById('spin-button').disabled = false;
+            document.getElementById('status-text').innerText = "Presiona el botón central para jugar";
+        }
+    </script>
+</body>
+</html>
